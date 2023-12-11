@@ -1,0 +1,6 @@
+Data Peserta Bootcamp Digital Skill - Golang Backend Development
+1. Nama: Agnar Briantama Ridhwanullah
+2. Email: briansurya25@gmail.com
+3. Sistem Operasi yang digunakan: Windows
+4. Akun Gitlab: https://gitlab.com/agnarbriantama
+5. Akun Telegram: @agnarbr
