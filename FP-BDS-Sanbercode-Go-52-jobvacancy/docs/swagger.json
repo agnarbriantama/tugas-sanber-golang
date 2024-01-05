@@ -1,0 +1,341 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/all_apply": {
+            "get": {
+                "description": "Display all applied data",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ApplyJob"
+                ],
+                "summary": "Get All Apply Job",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Apply"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/apply_job/:id": {
+            "post": {
+                "description": "Post apply job",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ApplyJob"
+                ],
+                "summary": "Post Apply Job",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Apply"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/apply_job/:id_apply": {
+            "delete": {
+                "description": "Delete a job",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ApplyJob"
+                ],
+                "summary": "Delete Job Apply",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Apply"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/change-password": {
+            "post": {
+                "description": "Change password by id and role user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Change Password",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Users"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/job-vacancy": {
+            "get": {
+                "description": "Get a list of all job vacancies",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job Vacancy"
+                ],
+                "summary": "Get all job vacancies",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Jobvacancy"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new job",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job Vacancy"
+                ],
+                "summary": "Create job vacancies",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Jobvacancy"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/job-vacancy/:id": {
+            "get": {
+                "description": "Detail Job Vacancy",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job Vacancy"
+                ],
+                "summary": "Detail Job Vacancy",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Jobvacancy"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update job",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job Vacancy"
+                ],
+                "summary": "Update job vacancy",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Jobvacancy"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a job from the database",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job Vacancy"
+                ],
+                "summary": "Delete Job Vacancy",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Jobvacancy"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "description": "Login with JWT",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Login",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Users"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "description": "Register Accout",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Register",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Users"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.Apply": {
+            "type": "object",
+            "properties": {
+                "company_desc": {
+                    "type": "string"
+                },
+                "company_name": {
+                    "type": "string"
+                },
+                "company_salary": {
+                    "type": "integer"
+                },
+                "company_status": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "id_apply": {
+                    "type": "integer"
+                },
+                "id_user": {
+                    "type": "integer"
+                },
+                "job_id": {
+                    "type": "integer"
+                },
+                "job_title": {
+                    "type": "string"
+                },
+                "status_lamaran": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Jobvacancy": {
+            "type": "object",
+            "properties": {
+                "company_desc": {
+                    "type": "string"
+                },
+                "company_name": {
+                    "type": "string"
+                },
+                "company_salary": {
+                    "type": "string"
+                },
+                "company_status": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Users": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id_user": {
+                    "type": "integer"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

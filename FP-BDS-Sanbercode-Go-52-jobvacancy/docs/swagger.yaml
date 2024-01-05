@@ -1,0 +1,222 @@
+definitions:
+  models.Apply:
+    properties:
+      company_desc:
+        type: string
+      company_name:
+        type: string
+      company_salary:
+        type: integer
+      company_status:
+        type: string
+      id:
+        type: integer
+      id_apply:
+        type: integer
+      id_user:
+        type: integer
+      job_id:
+        type: integer
+      job_title:
+        type: string
+      status_lamaran:
+        type: string
+      user_id:
+        type: integer
+      username:
+        type: string
+    type: object
+  models.Jobvacancy:
+    properties:
+      company_desc:
+        type: string
+      company_name:
+        type: string
+      company_salary:
+        type: string
+      company_status:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+    type: object
+  models.Users:
+    properties:
+      email:
+        type: string
+      id_user:
+        type: integer
+      password:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /all_apply:
+    get:
+      description: Display all applied data
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Apply'
+            type: array
+      summary: Get All Apply Job
+      tags:
+      - ApplyJob
+  /apply_job/:id:
+    post:
+      description: Post apply job
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Apply'
+            type: array
+      summary: Post Apply Job
+      tags:
+      - ApplyJob
+  /apply_job/:id_apply:
+    delete:
+      description: Delete a job
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Apply'
+            type: array
+      summary: Delete Job Apply
+      tags:
+      - ApplyJob
+  /change-password:
+    post:
+      description: Change password by id and role user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Users'
+            type: array
+      summary: Change Password
+      tags:
+      - Authentication
+  /job-vacancy:
+    get:
+      description: Get a list of all job vacancies
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Jobvacancy'
+            type: array
+      summary: Get all job vacancies
+      tags:
+      - Job Vacancy
+    post:
+      description: Create a new job
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Jobvacancy'
+            type: array
+      summary: Create job vacancies
+      tags:
+      - Job Vacancy
+  /job-vacancy/:id:
+    delete:
+      description: Delete a job from the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Jobvacancy'
+            type: array
+      summary: Delete Job Vacancy
+      tags:
+      - Job Vacancy
+    get:
+      description: Detail Job Vacancy
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Jobvacancy'
+            type: array
+      summary: Detail Job Vacancy
+      tags:
+      - Job Vacancy
+    put:
+      description: Update job
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Jobvacancy'
+            type: array
+      summary: Update job vacancy
+      tags:
+      - Job Vacancy
+  /login:
+    post:
+      description: Login with JWT
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Users'
+            type: array
+      summary: Login
+      tags:
+      - Authentication
+  /register:
+    post:
+      description: Register Accout
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Users'
+            type: array
+      summary: Register
+      tags:
+      - Authentication
+swagger: "2.0"
