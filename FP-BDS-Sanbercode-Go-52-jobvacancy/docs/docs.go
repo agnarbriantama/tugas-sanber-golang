@@ -15,69 +15,69 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/all_apply": {
+        "/applyjob": {
             "get": {
-                "description": "Display all applied data",
+                "description": "menampilkan semuda data list apply job",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "ApplyJob"
                 ],
-                "summary": "Get All Apply Job",
+                "summary": "Get List Apply Job",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.Apply"
+                                "$ref": "#/definitions/models.ApplyJob"
                             }
                         }
                     }
                 }
             }
         },
-        "/apply_job/:id": {
+        "/applyjob/:id_jobvacancy": {
             "post": {
-                "description": "Post apply job",
+                "description": "melakukan apply job",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "ApplyJob"
                 ],
-                "summary": "Post Apply Job",
+                "summary": "Apply Job Handler",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.Apply"
+                                "$ref": "#/definitions/models.ApplyJob"
                             }
                         }
                     }
                 }
             }
         },
-        "/apply_job/:id_apply": {
-            "delete": {
-                "description": "Delete a job",
+        "/applyjob/:id_jobvacancy/:id_apply": {
+            "put": {
+                "description": "update status pending to applied or rejected",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "ApplyJob"
                 ],
-                "summary": "Delete Job Apply",
+                "summary": "Confirm Status Apply Job",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.Apply"
+                                "$ref": "#/definitions/models.ApplyJob"
                             }
                         }
                     }
@@ -86,7 +86,7 @@ const docTemplate = `{
         },
         "/change-password": {
             "post": {
-                "description": "Change password by id and role user",
+                "description": "Role admin bisa mengganti password semua user, role job seeker by id",
                 "produces": [
                     "application/json"
                 ],
@@ -100,7 +100,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.Users"
+                                "$ref": "#/definitions/models.User"
                             }
                         }
                     }
@@ -109,7 +109,7 @@ const docTemplate = `{
         },
         "/job-vacancy": {
             "get": {
-                "description": "Get a list of all job vacancies",
+                "description": "Menampilkan semua list job vacancy",
                 "produces": [
                     "application/json"
                 ],
@@ -137,7 +137,7 @@ const docTemplate = `{
                 "tags": [
                     "Job Vacancy"
                 ],
-                "summary": "Create job vacancies",
+                "summary": "Create job vacancy",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -218,7 +218,7 @@ const docTemplate = `{
         },
         "/login": {
             "post": {
-                "description": "Login with JWT",
+                "description": "Login akun dengan auth JWT",
                 "produces": [
                     "application/json"
                 ],
@@ -232,7 +232,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.Users"
+                                "$ref": "#/definitions/models.User"
                             }
                         }
                     }
@@ -241,7 +241,7 @@ const docTemplate = `{
         },
         "/register": {
             "post": {
-                "description": "Register Accout",
+                "description": "Regisrasi akun dengan role admin dan jobseeker",
                 "produces": [
                     "application/json"
                 ],
@@ -255,7 +255,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.Users"
+                                "$ref": "#/definitions/models.User"
                             }
                         }
                     }
@@ -264,50 +264,42 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "models.Apply": {
+        "models.ApplyJob": {
             "type": "object",
             "properties": {
-                "company_desc": {
+                "created_at": {
                     "type": "string"
                 },
-                "company_name": {
-                    "type": "string"
-                },
-                "company_salary": {
-                    "type": "integer"
-                },
-                "company_status": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
+                "delete_at": {
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "id_apply": {
-                    "type": "integer"
-                },
-                "id_user": {
                     "type": "integer"
                 },
                 "job_id": {
                     "type": "integer"
                 },
-                "job_title": {
+                "status": {
                     "type": "string"
                 },
-                "status_lamaran": {
+                "updated_at": {
                     "type": "string"
                 },
                 "user_id": {
                     "type": "integer"
-                },
-                "username": {
-                    "type": "string"
                 }
             }
         },
         "models.Jobvacancy": {
             "type": "object",
             "properties": {
+                "applyjob": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ApplyJob"
+                    }
+                },
                 "company_desc": {
                     "type": "string"
                 },
@@ -315,22 +307,45 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "company_salary": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "company_status": {
+                    "type": "integer"
+                },
+                "created_at": {
                     "type": "string"
                 },
-                "id": {
+                "delete_at": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "id_jobvacancy": {
                     "type": "integer"
                 },
                 "title": {
                     "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
                 }
             }
         },
-        "models.Users": {
+        "models.User": {
             "type": "object",
             "properties": {
+                "applyjobs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ApplyJob"
+                    }
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "delete_at": {
+                    "type": "string",
+                    "format": "date-time"
+                },
                 "email": {
                     "type": "string"
                 },
@@ -341,6 +356,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "role": {
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 },
                 "username": {

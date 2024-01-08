@@ -1,4 +1,4 @@
-module github.com/agnarbriantama/tugas-sanber-golang/FP-BDS-Sanbercode-Go-52-jobvacancy
+module info-loker
 
 go 1.21.5
 
@@ -14,7 +14,7 @@ require (
 	github.com/go-openapi/spec v0.20.13 // indirect
 	github.com/go-openapi/swag v0.22.7 // indirect
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
-	github.com/gofiber/fiber/v2 v2.51.0 // indirect
+	github.com/gofiber/fiber/v2 v2.52.0 // indirect
 	github.com/gofiber/swagger v0.1.14 // indirect
 	github.com/google/uuid v1.5.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect

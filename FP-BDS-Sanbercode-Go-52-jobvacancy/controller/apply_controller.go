@@ -1,343 +1,265 @@
 package controller
 
 import (
-	"log"
+	"errors"
+	"info-loker/config"
+	"info-loker/models"
+	"os"
 	"strconv"
+	"strings"
 
-	"github.com/agnarbriantama/tugas-sanber-golang/FP-BDS-Sanbercode-Go-52-jobvacancy/config"
-	"github.com/agnarbriantama/tugas-sanber-golang/FP-BDS-Sanbercode-Go-52-jobvacancy/models"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
 )
 
-// @Summary Post Apply Job
-// @Description Post apply job
+// @Summary Apply Job Handler
+// @Description melakukan apply job
 // @Tags ApplyJob
 // @Produce json
-// @Success 200 {array} models.Apply
-// @Router /apply_job/:id [post]
-func PostApplyJob(c *fiber.Ctx) error {
-    // Pastikan pengguna sudah login
-    if err := protectWithJWT(c, "guest"); err != nil {
+// @Success 200 {array} models.ApplyJob
+// @Router /applyjob/:id_jobvacancy [post]
+func ApplyJobHandler(c *fiber.Ctx) error {
+    if err := protectWithJWT(c, "admin", "jobseeker"); err != nil {
         return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
     }
+	// Mendapatkan id_jobvacancies dari URL parameter
+	idJobVacancies, err := strconv.ParseUint(c.Params("id_jobvacancy"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid id_jobvacancy"})
+	}
 
-    // Dapatkan ID pekerjaan dari parameter atau payload (sesuai dengan kebutuhan Anda)
-    jobID := c.Params("id")
-
-    // Dapatkan ID pengguna dari token JWT
-    userClaims, ok := c.Locals("user").(jwt.MapClaims)
-    if !ok || userClaims == nil {
-        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
-    }
-
-    userID := int(userClaims["userID"].(float64))
-
-    // Dapatkan company_status dari tb_listjob
-    var companyStatus int
-    err := config.DB.QueryRow("SELECT company_status FROM tb_listjob WHERE id = ?", jobID).Scan(&companyStatus)
+	// Mengambil id_user dari token JWT atau sesuai kebutuhan
+	idUser, err := GetUserIdFromToken(c)
     if err != nil {
-        log.Fatal(err)
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Internal Server Error"})
-    }
-
-    // Periksa company_status dan tambahkan entri baru ke tabel tb_apply jika sesuai
-    if companyStatus == 1 {
-        _, err := config.DB.Exec("INSERT INTO tb_apply (id, id_user, status_lamaran) VALUES (?, ?, 'pending')", jobID, userID)
-        if err != nil {
-            log.Fatal(err)
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Internal Server Error"})
-        }
-
-        return c.JSON(fiber.Map{"message": "Job applied successfully"})
-    } else if companyStatus == 2 {
-        return c.JSON(fiber.Map{"message": "Lowongan sudah ditutup"})
-    } else {
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Status perusahaan tidak valid"})
-    }
+    return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
 }
 
-// @Summary Get All Apply Job
-// @Description Display all applied data
+	// Memeriksa apakah job vacancy dengan ID tertentu ada
+	var jobVacancy models.Jobvacancy
+	if err := config.DB.First(&jobVacancy, idJobVacancies).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Job vacancy not found"})
+	}
+
+	// Memeriksa status lowongan pekerjaan
+	if jobVacancy.CompanyStatus == 2 {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "JLowongan Kerja Sudah Tutup"})
+	}
+
+	// Memeriksa apakah job vacancy dengan ID tertentu ada
+	if err := config.DB.First(&jobVacancy, idJobVacancies).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Job vacancy not found"})
+	}
+
+	// Menambahkan data ke tabel apply_jobs
+	applyJob := models.ApplyJob{
+		User_Id: idUser,
+		JobID:   uint(idJobVacancies),
+		Status:  "pending", // Sesuaikan status sesuai kebutuhan
+	}
+
+	if err := config.DB.Create(&applyJob).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to apply for job"})
+	}
+
+	return c.JSON(fiber.Map{"message": "Job application successful"})
+}
+
+// @Summary Get List Apply Job 
+// @Description menampilkan semuda data list apply job
 // @Tags ApplyJob
 // @Produce json
-// @Success 200 {array} models.Apply
-// @Router /all_apply [get]
-func GetAllApplyJob(c *fiber.Ctx) error {
+// @Success 200 {array} models.ApplyJob
+// @Router /applyjob [get]
+func GetAllApplyJobsHandler(c *fiber.Ctx) error {
+	if err := protectWithJWT(c, "admin"); err != nil {
+        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+    }
+    jobID, err := strconv.ParseUint(c.Params("job_id"), 10, 64)
+    if err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid job_id"})
+    }
+    var apply_jobs []models.ApplyJob
+
+    // Mengambil semua data aplikasi dari basis data
+    if err := config.DB.Where("job_id = ?", jobID).Find(&apply_jobs).Error; err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to retrieve applications"})
+    }
+
+    // Mengembalikan data aplikasi sebagai respons
+    return c.JSON(apply_jobs)
+}
+
+
+// @Summary Confirm Status Apply Job 
+// @Description update status pending to applied or rejected
+// @Tags ApplyJob
+// @Produce json
+// @Success 200 {array} models.ApplyJob
+// @Router /applyjob/:id_jobvacancy/:id_apply [put]
+func ApplyStatusHandler(c *fiber.Ctx) error {
     if err := protectWithJWT(c, "admin"); err != nil {
         return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
     }
+	// Mendapatkan id_jobvacancies dan id_apply dari URL parameter
+	idJobVacancies, err := strconv.ParseUint(c.Params("id_jobvacancy"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid id_jobvacancy"})
+	}
 
-    rows, err := config.DB.Query(`
-        SELECT 
-            tb_apply.id_apply, 
-            tb_apply.id,
-            tb_apply.id_user,
-            tb_listjob.id AS job_id, 
-            tb_listjob.title AS job_title, 
-            tb_listjob.company_name, 
-            tb_listjob.company_desc, 
-            tb_listjob.company_salary, 
-            tb_listjob.company_status, 
-            users.id_user, 
-            users.username 
-        FROM 
-            tb_apply
-        JOIN 
-            tb_listjob ON tb_apply.id = tb_listjob.id
-        JOIN 
-            users ON tb_apply.id_user = users.id_user;
-    `)
+	idApply, err := strconv.ParseUint(c.Params("id_apply"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid id_apply"})
+	}
 
-    if err != nil {
-        log.Fatal(err)
-        return c.SendStatus(fiber.StatusInternalServerError)
-    }
-    defer rows.Close()
+	// Mengambil id_user dari token JWT
+	idUser, err := GetUserIdFromToken(c)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
 
-    var applyjob []models.Apply
-    for rows.Next() {
-        var app models.Apply
-        if err := rows.Scan(
-            &app.IDApply,
-            &app.ID,
-            &app.IDUser,
-            &app.JobID,
-            &app.JobTitle,
-            &app.CompanyName,
-            &app.CompanyDesc,
-            &app.CompanySalary,
-            &app.CompanyStatus,
-            &app.UserID,
-            &app.Username,
-        ); err != nil {
-            log.Fatal(err)
-            return c.SendStatus(fiber.StatusInternalServerError)
-        }
-        applyjob = append(applyjob, app)
+	// Memeriksa apakah job vacancy dengan ID tertentu ada
+	var jobVacancy models.Jobvacancy
+	if err := config.DB.First(&jobVacancy, idJobVacancies).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Job vacancy not found"})
+	}
+
+	// Memeriksa apakah aplikasi dengan ID tertentu dan User_ID yang sesuai ada
+	var applyJob models.ApplyJob
+	if err := config.DB.First(&applyJob, idApply).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Application not found"})
+	}
+
+	// Memeriksa apakah pengguna yang meminta edit status adalah pemilik aplikasi
+	if applyJob.User_Id != idUser {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
+    var requestBody map[string]string
+    if err := c.BodyParser(&requestBody); err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid JSON format"})
     }
 
-    return c.JSON(applyjob)
+    newStatus, exists := requestBody["status"]
+    if !exists || (newStatus != "applied" && newStatus != "rejected") {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid status parameter"})
+    }
+
+	applyJob.Status = newStatus
+
+	// Menyimpan perubahan ke dalam database
+	if err := config.DB.Save(&applyJob).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update application status"})
+	}
+
+	return c.JSON(fiber.Map{"message": "Application status updated successfully"})
 }
 
-func GetApplyJobByUserID(c *fiber.Ctx) error {
-    if err := protectWithJWT(c, "guest"); err != nil {
+
+func DeleteApplyHandler(c *fiber.Ctx) error {
+	if err := protectWithJWT(c, "admin"); err != nil {
+        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+    }
+   // Mendapatkan id_user dari token JWT
+    idUser, err := GetUserIdFromToken(c)
+    if err != nil {
         return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
     }
 
-    // Dapatkan id_user dari token JWT
-    userClaims, ok := c.Locals("user").(jwt.MapClaims)
-    if !ok || userClaims == nil {
-        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
-    }
-
-    userIDInToken := int(userClaims["userID"].(float64))
-
-    // Dapatkan id_user dari parameter URL
-    idUserStr := c.Params("id_user")
-    idUser, err := strconv.Atoi(idUserStr)
+    // Mendapatkan id_apply dari URL
+    idApply, err := strconv.ParseUint(c.Params("id_apply"), 10, 64)
     if err != nil {
-        log.Println(err)
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid User ID"})
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid id_apply parameter"})
     }
 
-    // Periksa apakah pengguna memiliki hak akses ke data aplikasi
-    if userIDInToken != idUser {
-        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+    // Menghapus data apply_job secara logis berdasarkan id_apply dan user_id
+    if err := config.DB.Unscoped().Where("id_apply = ? AND user_id = ?", idApply, idUser).Delete(&models.ApplyJob{}).Error; err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to delete application"})
     }
 
-    rows, err := config.DB.Query(`
-        SELECT 
-            tb_apply.id_apply, 
-            tb_apply.id,
-            tb_apply.id_user,
-            tb_listjob.id AS job_id, 
-            tb_listjob.title AS job_title, 
-            tb_listjob.company_name, 
-            tb_listjob.company_desc, 
-            tb_listjob.company_salary, 
-            tb_listjob.company_status, 
-            users.id_user, 
-            users.username 
-        FROM 
-            tb_apply
-        JOIN 
-            tb_listjob ON tb_apply.id = tb_listjob.id
-        JOIN 
-            users ON tb_apply.id_user = users.id_user
-        WHERE 
-            users.id_user = ?;
-    `, idUser)
-
-    if err != nil {
-        log.Fatal(err)
-        return c.SendStatus(fiber.StatusInternalServerError)
-    }
-    defer rows.Close()
-
-    var applyjob []models.Apply
-    for rows.Next() {
-        var app models.Apply
-        if err := rows.Scan(
-            &app.IDApply,
-            &app.ID,
-            &app.IDUser,
-            &app.JobID,
-            &app.JobTitle,
-            &app.CompanyName,
-            &app.CompanyDesc,
-            &app.CompanySalary,
-            &app.CompanyStatus,
-            &app.UserID,
-            &app.Username,
-        ); err != nil {
-            log.Fatal(err)
-            return c.SendStatus(fiber.StatusInternalServerError)
-        }
-        applyjob = append(applyjob, app)
-    }
-
-    return c.JSON(applyjob)
-}
-
-// @Summary Delete Job Apply
-// @Description Delete a job 
-// @Tags ApplyJob
-// @Produce json
-// @Success 200 {array} models.Apply
-// @Router /apply_job/:id_apply [delete]
-func DeleteJobApply(c *fiber.Ctx) error {
-    // Pastikan pengguna sudah login
-    if err := protectWithJWT(c, "admin"); err != nil {
-        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
-    }
-
-    // Dapatkan ID aplikasi dari parameter URL
-    idApplyStr := c.Params("id_apply")
-    idApply, err := strconv.Atoi(idApplyStr)
-    if err != nil {
-        log.Println(err)
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID"})
-    }
-
-    // Hapus entri aplikasi dari database
-    _, err = config.DB.Exec("DELETE FROM tb_apply WHERE id_apply = ?", idApply)
-    if err != nil {
-        log.Fatal(err)
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Internal Server Error"})
-    }
-
+    // Memberikan respons sukses
     return c.JSON(fiber.Map{"message": "Application deleted successfully"})
 }
 
-func UpdateJobApply(c *fiber.Ctx) error {
-    // Pastikan pengguna sudah login dan memiliki akses sebagai admin
-    if err := protectWithJWT(c, "admin"); err != nil {
-        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
-    }
 
-    // Dapatkan ID aplikasi dari parameter URL
-    idApplyStr := c.Params("id_apply")
-    idApply, err := strconv.Atoi(idApplyStr)
-    if err != nil {
-        log.Println(err)
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID"})
-    }
+// Fungsi untuk mendapatkan id_user dari token JWT
+func GetUserIdFromToken(c *fiber.Ctx) (uint, error) {
+	token := c.Get("Authorization")
 
-    // Bind request payload ke struct ApplyStatus
-    var updatedApplyStatus models.ApplyStatus
-    if err := c.BodyParser(&updatedApplyStatus); err != nil {
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request payload"})
-    }
+	// Mendapatkan token tanpa "Bearer "
+	jwtToken := strings.TrimPrefix(token, "Bearer ")
 
-    // Perbarui data aplikasi di database
-    _, err = config.DB.Exec("UPDATE tb_apply SET status_lamaran = ? WHERE id_apply = ?",
-        updatedApplyStatus.Status, idApply)
-    if err != nil {
-        log.Println(err)
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Internal Server Error"})
-    }
+	// Parse token JWT
+	claims := jwt.MapClaims{}
+	parsedToken, err := jwt.ParseWithClaims(jwtToken, &claims, func(token *jwt.Token) (interface{}, error) {
+		jwtSecret := os.Getenv("JWT_SECRET")
+		return []byte(jwtSecret), nil
+	})
 
-    return c.JSON(fiber.Map{"message": "Application status updated successfully"})
+	if err != nil {
+		return 0, err
+	}
+
+	if !parsedToken.Valid {
+		return 0, errors.New("Invalid token")
+	}
+
+	// Mendapatkan id_user dari claim JWT
+	idUserFloat64, ok := claims["id_user"].(float64)
+	if !ok {
+		return 0, errors.New("Invalid id_user claim in token")
+	}
+
+	idUser := uint(idUserFloat64)
+	return idUser, nil
 }
 
-func GetApplyJobByJobID(c *fiber.Ctx) error {
-    // Pastikan pengguna sudah login
-    if err := protectWithJWT(c, "admin"); err != nil {
-        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+
+
+func protectWithJWT(c *fiber.Ctx, allowedRoles ...string) error {
+    // Mendapatkan token dari header Authorization
+    tokenString := c.Get("Authorization")
+
+    // Memeriksa keberadaan token
+    if tokenString == "" {
+        return fiber.ErrUnauthorized
     }
 
-    // Dapatkan id_user dari token JWT
-    userClaims, ok := c.Locals("user").(jwt.MapClaims)
+    // Validasi token
+    token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+        jwtSecret := os.Getenv("JWT_SECRET")
+        return []byte(jwtSecret), nil // Ganti dengan secret key yang sesuai
+    })
+
+    if err != nil || !token.Valid {
+        return fiber.ErrUnauthorized
+    }
+
+    // Mendapatkan role dari token
+    userClaims, ok := token.Claims.(jwt.MapClaims)
     if !ok || userClaims == nil {
-        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+        return fiber.ErrUnauthorized
     }
 
-    // Dapatkan id_job dari parameter URL
-    idJobStr := c.Params("id_job")
-    idJob, err := strconv.Atoi(idJobStr)
-    if err != nil {
-        log.Println(err)
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid Job ID"})
+    userRole, ok := userClaims["role"].(string)
+    if !ok || userRole == "" {
+        return fiber.ErrUnauthorized
     }
 
-    // Query SQL untuk mendapatkan data aplikasi berdasarkan ID tb_listjob
-    rows, err := config.DB.Query(`
-        SELECT 
-            tb_apply.id_apply, 
-            tb_apply.id,
-            tb_apply.id_user,
-            tb_listjob.id AS job_id, 
-            tb_listjob.title AS job_title, 
-            tb_listjob.company_name, 
-            tb_listjob.company_desc, 
-            tb_listjob.company_salary, 
-            tb_listjob.company_status, 
-            users.id_user, 
-            users.username 
-        FROM 
-            tb_apply
-        JOIN 
-            tb_listjob ON tb_apply.id = tb_listjob.id
-        JOIN 
-            users ON tb_apply.id_user = users.id_user
-        WHERE 
-            tb_listjob.id = ?;
-    `, idJob)
-
-    if err != nil {
-        log.Fatal(err)
-        return c.SendStatus(fiber.StatusInternalServerError)
-    }
-    defer rows.Close()
-
-    var applyjob []models.Apply
-    for rows.Next() {
-        var app models.Apply
-        if err := rows.Scan(
-            &app.IDApply,
-            &app.ID,
-            &app.IDUser,
-            &app.JobID,
-            &app.JobTitle,
-            &app.CompanyName,
-            &app.CompanyDesc,
-            &app.CompanySalary,
-            &app.CompanyStatus,
-            &app.UserID,
-            &app.Username,
-        ); err != nil {
-            log.Fatal(err)
-            return c.SendStatus(fiber.StatusInternalServerError)
+    // Memeriksa apakah role pengguna termasuk dalam role yang diizinkan
+    roleAllowed := false
+    for _, allowedRole := range allowedRoles {
+        if userRole == allowedRole {
+            roleAllowed = true
+            break
         }
-        applyjob = append(applyjob, app)
     }
 
-	 // Periksa apakah tidak ada data ditemukan
-	 if len(applyjob) == 0 {
-        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Tidak ada job yang apply"})
+    if !roleAllowed {
+        return fiber.ErrUnauthorized
     }
 
-    return c.JSON(applyjob)
+    // Menambahkan informasi token ke konteks dengan kunci "user"
+    c.Locals("user", userClaims)
+
+    return nil
 }
-

@@ -1,48 +1,59 @@
 definitions:
-  models.Apply:
+  models.ApplyJob:
     properties:
-      company_desc:
+      created_at:
         type: string
-      company_name:
+      delete_at:
+        format: date-time
         type: string
-      company_salary:
-        type: integer
-      company_status:
-        type: string
-      id:
-        type: integer
       id_apply:
-        type: integer
-      id_user:
         type: integer
       job_id:
         type: integer
-      job_title:
+      status:
         type: string
-      status_lamaran:
+      updated_at:
         type: string
       user_id:
         type: integer
-      username:
-        type: string
     type: object
   models.Jobvacancy:
     properties:
+      applyjob:
+        items:
+          $ref: '#/definitions/models.ApplyJob'
+        type: array
       company_desc:
         type: string
       company_name:
         type: string
       company_salary:
-        type: string
+        type: integer
       company_status:
+        type: integer
+      created_at:
         type: string
-      id:
+      delete_at:
+        format: date-time
+        type: string
+      id_jobvacancy:
         type: integer
       title:
         type: string
+      updated_at:
+        type: string
     type: object
-  models.Users:
+  models.User:
     properties:
+      applyjobs:
+        items:
+          $ref: '#/definitions/models.ApplyJob'
+        type: array
+      created_at:
+        type: string
+      delete_at:
+        format: date-time
+        type: string
       email:
         type: string
       id_user:
@@ -51,15 +62,17 @@ definitions:
         type: string
       role:
         type: string
+      updated_at:
+        type: string
       username:
         type: string
     type: object
 info:
   contact: {}
 paths:
-  /all_apply:
+  /applyjob:
     get:
-      description: Display all applied data
+      description: menampilkan semuda data list apply job
       produces:
       - application/json
       responses:
@@ -67,14 +80,14 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.Apply'
+              $ref: '#/definitions/models.ApplyJob'
             type: array
-      summary: Get All Apply Job
+      summary: Get List Apply Job
       tags:
       - ApplyJob
-  /apply_job/:id:
+  /applyjob/:id_jobvacancy:
     post:
-      description: Post apply job
+      description: melakukan apply job
       produces:
       - application/json
       responses:
@@ -82,14 +95,14 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.Apply'
+              $ref: '#/definitions/models.ApplyJob'
             type: array
-      summary: Post Apply Job
+      summary: Apply Job Handler
       tags:
       - ApplyJob
-  /apply_job/:id_apply:
-    delete:
-      description: Delete a job
+  /applyjob/:id_jobvacancy/:id_apply:
+    put:
+      description: update status pending to applied or rejected
       produces:
       - application/json
       responses:
@@ -97,14 +110,15 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.Apply'
+              $ref: '#/definitions/models.ApplyJob'
             type: array
-      summary: Delete Job Apply
+      summary: Confirm Status Apply Job
       tags:
       - ApplyJob
   /change-password:
     post:
-      description: Change password by id and role user
+      description: Role admin bisa mengganti password semua user, role job seeker
+        by id
       produces:
       - application/json
       responses:
@@ -112,14 +126,14 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.Users'
+              $ref: '#/definitions/models.User'
             type: array
       summary: Change Password
       tags:
       - Authentication
   /job-vacancy:
     get:
-      description: Get a list of all job vacancies
+      description: Menampilkan semua list job vacancy
       produces:
       - application/json
       responses:
@@ -143,7 +157,7 @@ paths:
             items:
               $ref: '#/definitions/models.Jobvacancy'
             type: array
-      summary: Create job vacancies
+      summary: Create job vacancy
       tags:
       - Job Vacancy
   /job-vacancy/:id:
@@ -191,7 +205,7 @@ paths:
       - Job Vacancy
   /login:
     post:
-      description: Login with JWT
+      description: Login akun dengan auth JWT
       produces:
       - application/json
       responses:
@@ -199,14 +213,14 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.Users'
+              $ref: '#/definitions/models.User'
             type: array
       summary: Login
       tags:
       - Authentication
   /register:
     post:
-      description: Register Accout
+      description: Regisrasi akun dengan role admin dan jobseeker
       produces:
       - application/json
       responses:
@@ -214,7 +228,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.Users'
+              $ref: '#/definitions/models.User'
             type: array
       summary: Register
       tags:

@@ -1,7 +1,10 @@
 package routes
 
 import (
-	"github.com/agnarbriantama/tugas-sanber-golang/FP-BDS-Sanbercode-Go-52-jobvacancy/controller"
+	"info-loker/controller"
+
+	_ "info-loker/docs"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/swagger"
 )
@@ -17,9 +20,7 @@ import (
 // @host localhost:8080
 // @BasePath /job-vacancy-api/v1
 
-func SetupRoutes(app *fiber.App){
-	f := fiber.New()
-	g:= f.Group("/job-vacancy-api/v1")
+func SetupRoutes(app *fiber.App, ) {
 
 	app.Get("/swagger/*", swagger.HandlerDefault) // default
 
@@ -37,23 +38,20 @@ func SetupRoutes(app *fiber.App){
 		OAuth2RedirectUrl: "http://localhost:8080/swagger/oauth2-redirect.html",
 	}))
 
-
-
-	g.Get("/job-vacancy", controller.GetAllJobvacancy)
-	app.Post("/job-vacancy",controller.CreateJobvacancy)
-	app.Get("/job-vacancy/:id", controller.GetJobVacancyDetails)
-	app.Put("/job-vacancy/:id", controller.UpdateJobvacancy)
-	app.Delete("/job-vacancy/:id", controller.DeleteJobvacancy)
-
-	app.Post("/login", controller.Login)
 	app.Post("/register", controller.Register)
-	app.Post("/change-password", controller.ChangePassword)
+	app.Post("/login", controller.Login)
+	app.Post("/changepassword/:id_user", controller.ChangePassword)
 
-	app.Post("/apply_job/:id", controller.PostApplyJob)
-	app.Get("/all_apply", controller.GetAllApplyJob)
-	app.Get("/apply_job/:id_user", controller.GetApplyJobByUserID)
-	app.Delete("/apply_job/:id_apply", controller.DeleteJobApply)
-	app.Get("/apply_by_job/:id_job", controller.GetApplyJobByJobID)
+	app.Get("/job-vacancy", controller.GetAllJobVacancy)
+	app.Get("/job-vacancy/:id", controller.GetJobVacancyByID)
+	app.Post("/job-vacancy", controller.CreateJobVacancy)
+	app.Put("/job-vacancy/:id", controller.UpdateJobVacancy)
+	app.Delete("/job-vacancy/:id", controller.DeleteJobVacancy)
 
+	app.Get("/applyjob", controller.GetAllApplyJobsHandler)
+	app.Post("/applyjob/:id_jobvacancy",  controller.ApplyJobHandler)
+	app.Put("/applyjob/:id_jobvacancy/:id_apply", controller.ApplyStatusHandler)
+	app.Delete("/applyjob/:id_apply", controller.DeleteApplyHandler)
 	
+
 }
